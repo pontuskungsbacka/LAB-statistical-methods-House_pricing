@@ -202,10 +202,38 @@ class LinearRegression:
         upper = self.b + t_val * self.SE
         return np.column_stack((lower, upper))
     
-    def get_correlations(self):
-        correlations = []
-        for i in range(1, self.d + 1): 
-            feature_col = self.X[:, i]
-            r, p_val = pearsonr(feature_col, self.y)
-            correlations.append(r)
-        return correlations
+    def get_correlations(self, X):
+        """
+        Calculates Pearson correlation between ALL pairs of features in X.
+        """
+        X_mat = np.array(X, dtype=float)
+        n_vars = X_mat.shape[1]
+        results = []
+
+        for i in range(n_vars):
+            for j in range(i + 1, n_vars):
+                if np.std(X_mat[:, i]) == 0 or np.std(X_mat[:, j]) == 0:
+                    r = 0 
+                else:
+                    r, _ = stats.pearsonr(X_mat[:, i], X_mat[:, j])
+                results.append((i, j, r))
+        return results
+    
+    def summary(self, feature_names=None):
+        if self.b is None:
+            print("Model not fitted.")
+            return
+            
+        if feature_names is None:
+            names = ['Intercept'] + [f'x{i}' for i in range(self.d)]
+        else:
+            names = ['Intercept'] + feature_names
+
+        print(f"{'Feature':<25} {'Coeff':>10} {'P-Value':>10} {'Statistical Significance':>25}")
+        print("-" * 80)
+        p_vals = self.t_p_values()
+        
+        for i, name in enumerate(names):
+            p = p_vals[i]
+            sig = "*" if p < 0.05 else ""
+            print(f"{name:<25} {self.b[i]:>10.4f} {p:>10.4f} {sig:>25}")
