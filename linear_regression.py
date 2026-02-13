@@ -1,11 +1,13 @@
 import numpy as np
 import scipy.stats as stats
 from scipy import linalg
+from scipy.stats import t, f, pearsonr
 
 class LinearRegression:
-    def __init__(self, X, y):
+    def __init__(self):
         self.coefficients = None
         self.intercept = None
+        self.feature_col = None
 
         #Parameters for the models
         self.X = None
@@ -191,3 +193,19 @@ class LinearRegression:
         missing_cols = df.isnull().sum()[df.isnull().sum() > 0]
         for col, count in missing_cols.items():
             print(f"{col} : {count} ({round(100 * count / len(df), 3)}%)")
+
+    def confidence_intervals(self, alpha):
+        if self.SE is None:
+            self.standard_error()
+        t_val = self.t_p_values()
+        lower = self.b - t_val * self.SE
+        upper = self.b + t_val * self.SE
+        return np.column_stack((lower, upper))
+    
+    def get_correlations(self):
+        correlations = []
+        for i in range(1, self.d + 1): 
+            feature_col = self.X[:, i]
+            r, p_val = pearsonr(feature_col, self.y)
+            correlations.append(r)
+        return correlations
